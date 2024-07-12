@@ -10,7 +10,7 @@ export const useChunckDescriptionSchema = z.object({
 export async function useChunckDescription(chunckContent: string) {
   const messages: OpenAI.ChatCompletionMessageParam[] = [
     {
-      role: 'system', content: `The user will provide code snippets, Your task is to provide a series of keywords/tags that could help identify this piece of code (similar to twitter hastags)`
+      role: 'system', content: `The user will provide code snippets, Your task is to provide a series of keywords/tags that could help identify this piece of code (similar to twitter hashtags but without the '#')`
     },
     {
       role: "user", content: `

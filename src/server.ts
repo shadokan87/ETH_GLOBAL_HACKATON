@@ -65,11 +65,30 @@ app.post('/index_codebase', async (req: Request, res: Response) => {
         }
         if (currentElem.name.charAt(0) != '.') {
           const chuncks = await splitSourceCode(currentElem.path);
-          const chuncksEmbeddings = await Promise.all(chuncks?.map(async chunk => {
-            return await embedData(chunk.pageContent);
-          }) || []);
+          const chuncksDescriptions = chuncks ? await Promise.all(chuncks.map(async (chunck) => await useChunckDescription(chunck.pageContent))) : [];
+          // To get arguments
+          const _arguments = chuncksDescriptions.map(response => {
+            const tool_calls = response?.choices[0].message.tool_calls;
+            if (tool_calls) {
+              return tool_calls[0].function.arguments;
+            }
+            return undefined;
+          });
 
-           await Promise.all(chuncksEmbeddings.map(async embedding => {
+          const argumentsParsed: (string | undefined)[] = _arguments.map(arg => {
+            if (!arg)
+              return undefined;
+            try {
+              const parsed: z.infer<typeof useChunckDescriptionSchema> = JSON.parse(arg);
+              return parsed.description;
+            } catch (e) {
+              return undefined;
+            }
+          }).filter(arg => arg !== undefined && arg !== null);
+          const embeddedDescriptions = await Promise.all((argumentsParsed as string[]).map(async description => {
+            return await embedData(description);
+          }));
+          await Promise.all(embeddedDescriptions.map(async embedding => {
             const data: Database['public']['Tables']['documents']['Insert'] = {
               name: currentElem.name,
               description: embedding?.input,
@@ -79,44 +98,10 @@ app.post('/index_codebase', async (req: Request, res: Response) => {
             }
             await services.supabase?.from('documents').insert(data);
           }));
-
-          // const chuncksDescriptions = chuncks ? await Promise.all(chuncks.map(async (chunck) => await useChunckDescription(chunck.pageContent))) : [];
-          // // To get arguments
-          // const _arguments = chuncksDescriptions.map(response => {
-          //   const tool_calls = response?.choices[0].message.tool_calls;
-          //   if (tool_calls) {
-          //     return tool_calls[0].function.arguments;
-          //   }
-          //   return undefined;
-          // });
-
-          // const argumentsParsed: (string | undefined)[] = _arguments.map(arg => {
-          //   if (!arg)
-          //     return undefined;
-          //   try {
-          //     const parsed: z.infer<typeof useChunckDescriptionSchema> = JSON.parse(arg);
-          //     return parsed.description;
-          //   } catch (e) {
-          //     return undefined;
-          //   }
-          // }).filter(arg => arg !== undefined && arg !== null);
-          // const embeddedDescriptions = await Promise.all((argumentsParsed as string[]).map(async description => {
-          //   return await embedData(description);
-          // }));
-          // await Promise.all(embeddedDescriptions.map(async embedding => {
-          //   const data: Database['public']['Tables']['documents']['Insert'] = {
-          //     name: currentElem.name,
-          //     description: embedding?.input,
-          //     description_embedding: JSON.stringify(embedding?.embedding.data[0].embedding),
-          //     path: currentElem.path,
-          //     user_id: userId
-          //   }
-          //   await services.supabase?.from('documents').insert(data);
-          // }));
-          // argumentsParsed.forEach(async description => {
-          //   await services.supabase?.from('documents')
-          // });
-          // console.log("LOL", JSON.stringify(embeddedDescriptions, null, 2));
+          argumentsParsed.forEach(async description => {
+            await services.supabase?.from('documents')
+          });
+          console.log("LOL", JSON.stringify(embeddedDescriptions, null, 2));
 
         }
         console.log("Reading: ", currentElem.path);
