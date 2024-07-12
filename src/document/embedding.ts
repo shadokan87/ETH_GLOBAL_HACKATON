@@ -13,7 +13,7 @@ export async function embedData(input: string) {
   }
 
   const embedding = await services.openai.embeddings.create({
-    model: "text-embedding-3-small",
+    model: "text-embedding-3-large",
     input,
     encoding_format: "float",
   });

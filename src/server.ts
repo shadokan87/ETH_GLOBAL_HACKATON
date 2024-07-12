@@ -9,8 +9,9 @@ import { config } from './config';
 import { splitSourceCode } from './document/splitting';
 import { useChunckDescription, useChunckDescriptionSchema } from './agents/useChunckDescription';
 import { findKey } from 'lodash';
-import type { z } from 'zod';
+import { z } from 'zod';
 import { embedData } from './document/embedding';
+import { similaritySearch } from './document/similaritySearch';
 const app: Express = express();
 const userId = "739ab0c3-332a-47b4-8cf8-13adb629a61b";
 
@@ -21,6 +22,22 @@ const port = process.env.PORT || 8080;
 
 let loopCount = 0;
 const loopLimit = 10;
+
+const searchSchema = z.object({
+  prompt: z.string()
+});
+
+
+app.post('/search', async (req: Request, res: Response) => {
+  const body = searchSchema.safeParse(req.body);
+  if (!body.success) {
+    console.log("!err body", body.error);
+    res.status(400).send(body.error);
+    return;
+  }
+  res.status(200).json({ message: body.data.prompt, data: await similaritySearch(body.data.prompt) })
+});
+
 app.post('/index_codebase', async (req: Request, res: Response) => {
   async function indexCodeBse() {
     services.tree?.setCwd(config.projectRoot);
