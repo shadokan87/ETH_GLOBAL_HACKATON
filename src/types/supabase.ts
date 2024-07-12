@@ -203,6 +203,19 @@ export type Database = {
           similarity: number
         }[]
       }
+      similarity_searchv5: {
+        Args: {
+          query_embedding: string
+          match_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: number
+          path: string
+          description: string
+          similarity: number
+        }[]
+      }
       sparsevec_out: {
         Args: {
           "": unknown

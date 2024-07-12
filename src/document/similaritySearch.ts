@@ -2,6 +2,7 @@ import { services } from "../services";
 import { embedData } from "./embedding";
 
 export async function similaritySearch(query: string) {
+  console.log("HIT_HERE");
   const queryEmbedding = await embedData(query);
   if (!queryEmbedding)
     return undefined;
