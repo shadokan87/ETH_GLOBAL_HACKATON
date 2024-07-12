@@ -48,18 +48,33 @@ app.post('/index_codebase', async (req: Request, res: Response) => {
         if (currentElem.name.charAt(0) != '.') {
           const chuncks = await splitSourceCode(currentElem.path);
           const chuncksDescriptions = chuncks ? await Promise.all(chuncks.map(async (chunck) => await useChunckDescription(chunck.pageContent))) : [];
-          const chuncksResponseChoices = chuncksDescriptions.map(c => {
-            return c?.choices;
-          });
-          let _arguments: (string | undefined)[] = [];
-          for (let i = 0; i < chuncksResponseChoices.length; i++) {
-            if (!chuncksResponseChoices[i]) {
-              _arguments.push(undefined);
-              continue ;
+          // To get arguments
+          const _arguments = chuncksDescriptions.map(response => {
+            const tool_calls = response?.choices[0].message.tool_calls;
+            if (tool_calls) {
+              return tool_calls[0].function.arguments;
             }
-          }
-          // console.log("LOL", JSON.stringify(chuncksResponseChoices, null, 2));
-          
+            return undefined;
+          });
+
+          const argumentsParsed: (string | undefined)[] = _arguments.map(arg => {
+            if (!arg)
+              return undefined;
+            try {
+              const parsed: z.infer<typeof useChunckDescriptionSchema> = JSON.parse(arg);
+              return parsed.description;
+            } catch (e) {
+              return undefined;
+            }
+          }).filter(arg => arg !== undefined && arg !== null);
+          const embeddedDescriptions = await Promise.all((argumentsParsed as string[]).map(async description => {
+            return await embedData(description);
+          }));
+          // argumentsParsed.forEach(async description => {
+          //   await services.supabase?.from('documents')
+          // });
+          console.log("LOL", JSON.stringify(embeddedDescriptions, null, 2));
+
         }
         console.log("Reading: ", currentElem.path);
       }

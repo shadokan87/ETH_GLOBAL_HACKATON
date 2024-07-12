@@ -9,7 +9,7 @@ import { services } from "../services";
 export async function embedData(input: string) {
   if (!services.openai) {
     console.error("Open ai error");
-    return;
+    return undefined;
   }
 
   const embedding = await services.openai.embeddings.create({
