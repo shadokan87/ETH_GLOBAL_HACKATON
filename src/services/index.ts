@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { TreeService } from "./treeService";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../types/supabase";
 
 /**
  * Interface for services.
@@ -10,7 +11,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export interface Iservices {
   openai: OpenAI,
   tree: TreeService,
-  supabase: SupabaseClient
+  supabase: SupabaseClient<Database>
 }
 
 export let services: Partial<Iservices> = {};

@@ -12,6 +12,7 @@ import { findKey } from 'lodash';
 import type { z } from 'zod';
 import { embedData } from './document/embedding';
 const app: Express = express();
+const userId = "739ab0c3-332a-47b4-8cf8-13adb629a61b";
 
 app.use(express.json());
 
@@ -69,6 +70,16 @@ app.post('/index_codebase', async (req: Request, res: Response) => {
           }).filter(arg => arg !== undefined && arg !== null);
           const embeddedDescriptions = await Promise.all((argumentsParsed as string[]).map(async description => {
             return await embedData(description);
+          }));
+          await Promise.all(embeddedDescriptions.map(async embedding => {
+            const data: Database['public']['Tables']['documents']['Insert'] = {
+              name: currentElem.name,
+              description: embedding?.input,
+              description_embedding: JSON.stringify(embedding?.embedding.data[0].embedding),
+              path: currentElem.path,
+              user_id: userId
+            }
+            await services.supabase?.from('documents').insert(data);
           }));
           // argumentsParsed.forEach(async description => {
           //   await services.supabase?.from('documents')

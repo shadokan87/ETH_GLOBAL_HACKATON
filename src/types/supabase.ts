@@ -13,7 +13,8 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
-          embedding: string | null
+          description: string | null
+          description_embedding: string | null
           id: number
           name: string | null
           path: string | null
@@ -22,7 +23,8 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
-          embedding?: string | null
+          description?: string | null
+          description_embedding?: string | null
           id?: number
           name?: string | null
           path?: string | null
@@ -31,7 +33,8 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
-          embedding?: string | null
+          description?: string | null
+          description_embedding?: string | null
           id?: number
           name?: string | null
           path?: string | null
