@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { embedData } from './document/embedding';
 import { similaritySearch, sortDocumentsResult } from './document/similaritySearch';
 import type { ArgumentsType } from 'langchain/output_parsers/expression';
+import { useCodeRefactor } from './agents/useCodeRefactor';
 const app: Express = express();
 const userId = "739ab0c3-332a-47b4-8cf8-13adb629a61b";
 
@@ -54,7 +55,7 @@ app.post('/prompt', async (req: Request, res: Response) => {
     isRefactor: true,
   }
   const body = promptSchema.safeParse(req.body);
-  let attachmentsPaths: string[];
+  let attachmentsPaths: string[] = [];
   if (!body.success) {
     console.log("!err body", body.error);
     res.status(400).send(body.error);
@@ -65,13 +66,25 @@ app.post('/prompt', async (req: Request, res: Response) => {
     if (!similaritySearchResult || !similaritySearchResult.data) {
       //TODO: handle error
       res.status(500).send("internal server error");
-      return ;
+      return;
     }
-    const similaritySorted = await sortDocumentsResult(similaritySearchResult.data)
-    res.status(200).json({ message: body.data.prompt, meta, sorted: similaritySorted, data: similaritySearchResult })
+    const similaritySorted = await sortDocumentsResult(similaritySearchResult.data);
+    attachmentsPaths = [...attachmentsPaths, ...similaritySorted];
+    // res.status(200).json({ message: body.data.prompt, meta, sorted: similaritySorted, data: similaritySearchResult })
   } else {
-    res.status(200).json({ message: body.data.prompt, meta })
   }
+  if (meta.isRefactor) {
+    console.log("HIT_REFACTOR");
+    try {
+      const result = await useCodeRefactor(body.data.prompt, attachmentsPaths);
+      res.status(200).json({ message: body.data.prompt, meta, attachmentsPaths, refactor: result });
+    } catch (error) {
+      console.error("Error in useCodeRefactor:", error);
+      res.status(500).send("Internal server error");
+    }
+    return;
+  }
+  res.status(200).json({ message: body.data.prompt, meta, attachmentsPaths })
 });
 
 app.post('/index_codebase', async (req: Request, res: Response) => {
