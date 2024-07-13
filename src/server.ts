@@ -11,7 +11,8 @@ import { useChunckDescription, useChunckDescriptionSchema } from './agents/useCh
 import { chunk, findKey } from 'lodash';
 import { z } from 'zod';
 import { embedData } from './document/embedding';
-import { similaritySearch } from './document/similaritySearch';
+import { similaritySearch, sortDocumentsResult } from './document/similaritySearch';
+import type { ArgumentsType } from 'langchain/output_parsers/expression';
 const app: Express = express();
 const userId = "739ab0c3-332a-47b4-8cf8-13adb629a61b";
 
@@ -60,7 +61,14 @@ app.post('/prompt', async (req: Request, res: Response) => {
     return;
   }
   if (meta.isCodeBaseWide) {
-    res.status(200).json({ message: body.data.prompt, meta, data: await similaritySearch(body.data.prompt) })
+    const similaritySearchResult = await similaritySearch(body.data.prompt);
+    if (!similaritySearchResult || !similaritySearchResult.data) {
+      //TODO: handle error
+      res.status(500).send("internal server error");
+      return ;
+    }
+    const similaritySorted = await sortDocumentsResult(similaritySearchResult.data)
+    res.status(200).json({ message: body.data.prompt, meta, sorted: similaritySorted, data: similaritySearchResult })
   } else {
     res.status(200).json({ message: body.data.prompt, meta })
   }
