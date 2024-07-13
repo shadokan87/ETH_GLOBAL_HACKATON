@@ -4,7 +4,7 @@ let i  = 0;
 const br = () => {
   console.log(`#br ${i++}`);
 }
-
+// 0x368a365348AF4dfC02ECCf100da77473EFc17017
 (async () => {
   try {
     br();
