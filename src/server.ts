@@ -38,6 +38,34 @@ app.post('/search', async (req: Request, res: Response) => {
   res.status(200).json({ message: body.data.prompt, data: await similaritySearch(body.data.prompt) })
 });
 
+interface meta {
+  isCodeBaseWide: boolean,
+  isRefactor: boolean,
+}
+
+const promptSchema = z.object({
+  prompt: z.string()
+});
+
+app.post('/prompt', async (req: Request, res: Response) => {
+  const meta: meta = {
+    isCodeBaseWide: true,
+    isRefactor: true,
+  }
+  const body = promptSchema.safeParse(req.body);
+  let attachmentsPaths: string[];
+  if (!body.success) {
+    console.log("!err body", body.error);
+    res.status(400).send(body.error);
+    return;
+  }
+  if (meta.isCodeBaseWide) {
+    res.status(200).json({ message: body.data.prompt, meta, data: await similaritySearch(body.data.prompt) })
+  } else {
+    res.status(200).json({ message: body.data.prompt, meta })
+  }
+});
+
 app.post('/index_codebase', async (req: Request, res: Response) => {
   async function indexCodeBse() {
     services.tree?.setCwd(config.projectRoot);

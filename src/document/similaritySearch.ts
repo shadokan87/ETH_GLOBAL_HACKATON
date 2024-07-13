@@ -1,4 +1,5 @@
 import { services } from "../services";
+import type { Database } from "../types/supabase";
 import { embedData } from "./embedding";
 
 export async function similaritySearch(query: string) {
@@ -14,4 +15,8 @@ export async function similaritySearch(query: string) {
   });
   console.log(JSON.stringify(response, null, 2));
   return response;
+}
+
+export async function sortDocumentsResult(result: Array<Database['public']['Functions']['similarity_searchv6']['Returns']>) {
+  const reference = result[0];
 }

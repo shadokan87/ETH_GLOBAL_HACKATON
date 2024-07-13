@@ -7,6 +7,12 @@ export const useChunckDescriptionSchema = z.object({
   description: z.string().describe("your output for the chuck description")
 })
 
+/**
+ * Generates a description for a given code chunk using OpenAI's GPT model.
+ * 
+ * @param {string} chunckContent - The content of the code chunk to be described.
+ * @returns {Promise<OpenAI.ChatCompletionResponse | undefined>} - The response from the OpenAI API containing the description.
+ */
 export async function useChunckDescription(chunckContent: string) {
   const messages: OpenAI.ChatCompletionMessageParam[] = [
     {
